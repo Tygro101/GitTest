@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <body>
+  <button id='signup'>signup</button>
+  <button id='login'>login</button>
+  <button id='dec'>dec</button>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	<script>
+  var data = {};
+  var socket = io('http://localhost:8080');
+  var tag = document.getElementById("signup");
+  console.log(tag);
+  document.getElementById("signup").addEventListener("click", function(){
+    socket.emit('signup',{username:'ran tayeb'});
+  });
+
+  document.getElementById("login").addEventListener("click", function(){
+    socket.emit('login',data.user._id);
+    console.log(data.user._id);
+  });
+
+  document.getElementById("dec").addEventListener("click", function(){
+    socket.emit('dec',data.user._id);
+    console.log(data.user._id);
+  });
+
+  socket.on('signed', function(msg){
+    data = msg;
+  });
+  socket.on('on-error', function(msg){
+        console.log(msg);
+  });
+
+  socket.on('loged-in', function(msg){
+        console.log(msg);
+  });
+	</script>>
+
+  </body>
+
+ </html>
