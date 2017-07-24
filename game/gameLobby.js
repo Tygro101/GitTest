@@ -6,8 +6,10 @@ function gameLobby() {
 
 
 
-	this.EnterTable = function(tableId, player){
-		
+	this.EnterTable = function(tableId, player, Socket, callback){
+		table1.AddPlayer(player, Socket, function(msg){
+			callback(msg);
+		});
 	}
 }
 

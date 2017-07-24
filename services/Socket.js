@@ -30,10 +30,16 @@ module.exports = function(io, game) {
             });
         });
 
-
-        socket.on('dec', function(msg) {
-            game.dicrece(socket, function(err, data){
+        socket.on('join-table', function(msg) {
+            console.log(msg);
+            game.JoinTable(socket, msg, function(msg){
+                socket.emit('joined', msg);
             });
         });
+
+        //socket.on('dec', function(msg) {
+        //    game.dicrece(socket, function(err, data){
+        //    });
+        //});
     });
 }
