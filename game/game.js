@@ -38,11 +38,9 @@ Game.prototype.JoinTable = function(Socket, data, callback){
 		this.gameLobby.EnterTable(data.table.id, data.player, Socket, function(msg){
 			console.log('joinedddd');
 			console.log(msg);
-			callback(msg);
-		});
+		}
 	}
 }
- 
 
 //Game.prototype.dicrece = function(Socket){
 //	console.log('dicrece');
