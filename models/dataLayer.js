@@ -5,7 +5,6 @@ module.exports = dataLayer;
 
 function dataLayer(){ // TODO facebook user
 
-
 	this.AddUser = function(data, callback){
 		User.findOne({'local.username': data.username}, function(err, user){
         	console.log('on datalayer game, data : '+ data + ' ,err : '+err );
