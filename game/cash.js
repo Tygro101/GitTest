@@ -14,6 +14,10 @@ function cash(){
 	this.GetPlayer = function(Socket){
 		return players[playersSockets[Socket.id]];
 	}
+	
+	this.GetPlayerByUserId = function(_id){
+		return players[_id];
+	}
 
 	this.RemovePlayer = function(Socket){
 		if(playersSockets[Socket.id]){

@@ -20,6 +20,8 @@
   });
 
   document.getElementById("join").addEventListener("click", function(){
+    data.table = {};
+    data.table.id = '1';
     socket.emit('join-table',data);
   });
 

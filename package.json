@@ -10,13 +10,15 @@
   "author": "Ran Tayeb",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.15.3",
-    "express-session": "^1.15.3",
     "bcrypt": "^1.0.2",
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
+    "express": "^4.15.3",
+    "express-session": "^1.15.3",
     "mongoose": "^4.10.5",
     "morgan": "^1.8.2",
-    "socket.io": "^2.0.3"
+    "radis": "^0.2.0",
+    "socket.io": "^2.0.3",
+    "socket.io-redis": "^5.1.0"
   }
 }

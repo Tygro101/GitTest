@@ -19,7 +19,7 @@ Game.prototype.Signup = function(Socket, data, callback){
 	});
 }
 
-Game.prototype.Login = function(Socket, _id, callback){// bug - check if login not by socket if _id is givin
+Game.prototype.Login = function(Socket, _id, callback){// bug - check if login not by socket if user._id is givin
 	var cash = this.cash;
 	if(this.IsLogedIn(Socket)){
 		return callback(new Error("User is already logedin"), null);
@@ -33,12 +33,13 @@ Game.prototype.Login = function(Socket, _id, callback){// bug - check if login n
 
 
 Game.prototype.JoinTable = function(Socket, data, callback){
-	var user = this.cash.GetPlayer(data.user._id);
+	var user = this.cash.GetPlayerByUserId(data.user._id);
 	if(user){
-		this.gameLobby.EnterTable(data.table.id, data.player, Socket, function(msg){
-			console.log('joinedddd');
-			console.log(msg);
-		}
+		this.gameLobby.EnterTable(data.table.id, data.user, Socket, function(msg){
+			callback(msg);
+		});
+	}else{
+		callback({'msg':'user was not found'})
 	}
 }
 

@@ -21,11 +21,7 @@ table.prototype.AddPlayer = function(player, Socket, callback) {
 	callback({'added':true, 'tableId':this.id});
 }
 
-<<<<<<< HEAD
 table.prototype.AssignListeners = function(Socket){
-=======
-this.prototype.AssignListeners = function(Socket){
->>>>>>> 2b1cbf11d667c02ff890f10f7e304c3f942f3312
 	Socket.on('check', function(msg){
 		
 	});
