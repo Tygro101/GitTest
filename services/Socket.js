@@ -31,7 +31,6 @@ module.exports = function(io, game) {
         });
 
         socket.on('join-table', function(msg) {
-            console.log(msg);
             game.JoinTable(socket, msg, function(msg){
                 socket.emit('joined', msg);
             });

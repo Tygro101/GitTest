@@ -18,14 +18,15 @@ table.prototype.getMaxByIn = function(){
 }
 
 table.prototype.AddPlayer = function(player, Socket, callback) {
+	var table = this;
 	this.players[player._id] = {player, 'socket':Socket};
-	this.AssignListeners(Socket, this.id, function(){
+	this.AssignListeners(Socket, function(){
 		this.seats_count++;
-		callback({'added':true, 'tableId':this.id});
+		callback({'added':true, 'tableId':table.id});
 	});
 }
 
-table.prototype.AssignListeners = function(Socket, callback){
+table.prototype.AssignListeners = function(Socket,callback){
 	Socket.join(this.id);
 	Socket.on('muck', function(msg){
 		Socket.broadcast.to('').emit('muck', {'playerId':msg.id});
@@ -42,9 +43,11 @@ table.prototype.AssignListeners = function(Socket, callback){
 	callback();
 }
 
-table.prototype.RemovePlayer = function(data, Socket){
+table.prototype.RemovePlayer = function(player, Socket){
+	console.log('in table remove');
+	console.log(player);
 	this.RemoveFromTable(Socket);
-	Socket.broadcast.to(this.id).emit('leaved', {'playerId':data.id});
+	Socket.broadcast.to(this.id).emit('leaved', {'playerId':player._id});
 	
 }
 

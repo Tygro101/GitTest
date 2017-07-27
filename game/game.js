@@ -49,6 +49,8 @@ Game.prototype.IsLogedIn = function(Socket){
 }
 
 Game.prototype.SingoutPlayer = function(Socket) { // to do save player with the new money
-	var player = this.cash.GetPlayer(Socket);
+	console.log('in player signout');
+	var player = this.cash.GetPlayerBySocket(Socket);
+	this.gameLobby.RemoveFromTable(player, Socket);
 	this.cash.RemovePlayer(Socket);
 }

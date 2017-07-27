@@ -11,9 +11,13 @@ function cash(){
 		return players[user._id];
 	}
 
-	this.GetPlayer = function(id){
-		return players[id];
+	this.GetPlayer = function(_id){ // _id - player id
+		return players[_id];
 	}
+	this.GetPlayerBySocket = function(Socket){ // _id - player id
+		return players[playersSockets[Socket.id]];
+	}
+	
 	
 	this.GetPlayerByUserId = function(_id){
 		return players[_id];
