@@ -7,6 +7,8 @@ var app      = express();
 
 var http = require("http").Server(app);
 var io   = require("socket.io")(http);
+var socketioRedis = require('socket.io-redis');
+var redisConfig = require("./config/redisConfig");
 
 var port = '8080'||process.env.PORT;
 var path = require("path");
@@ -54,6 +56,7 @@ app.get('/users', function(req, res){
 })
 //
 
+io.adapter(socketioRedis({host: redisConfig.redis_host, port: redisConfig.redis_port}));
 
 require("./services/Socket")(io, new game(new dataLayer(), new cash()));
 

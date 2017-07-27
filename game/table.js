@@ -1,13 +1,15 @@
+var uniqid = require("uniqid");
 
 module.exports = table;
 
 
-function table(id){
-	this.id = id;
+function table(){
+	this.id = uniqid();
 	this.players = {};
 	this.seats_count = 0;
 	this.blind = 0;
-	this.maxByIn = 0;	
+	this.maxByIn = 0;
+	return this.id;
 }
 
 
@@ -17,20 +19,36 @@ table.prototype.getMaxByIn = function(){
 
 table.prototype.AddPlayer = function(player, Socket, callback) {
 	this.players[player._id] = {player, 'socket':Socket};
-	this.AssignListeners(Socket);
-	callback({'added':true, 'tableId':this.id});
+	this.AssignListeners(Socket, this.id, function(){
+		this.seats_count++;
+		callback({'added':true, 'tableId':this.id});
+	});
 }
 
-table.prototype.AssignListeners = function(Socket){
-	Socket.on('check', function(msg){
-		
+table.prototype.AssignListeners = function(Socket, callback){
+	Socket.join(this.id);
+	Socket.on('muck', function(msg){
+		Socket.broadcast.to('').emit('muck', {'playerId':msg.id});
 	});
 	
-	Socket.on('muck', function(msg){
-		
+	Socket.on('check', function(msg){
+		Socket.broadcast.to(this.id).emit('check', {'playerId':msg.id});
 	});
 	
 	Socket.on('raise', function(msg) {
-	    
+	    Socket.broadcast.to(this.id).emit('raise', {'playerId':msg.id, 'rase':msg.rase});
 	})
+	
+	callback();
+}
+
+table.prototype.RemovePlayer = function(data, Socket){
+	this.RemoveFromTable(Socket);
+	Socket.broadcast.to(this.id).emit('leaved', {'playerId':data.id});
+	
+}
+
+table.prototype.RemoveFromTable = function (Socket) {
+	Object.keys(Socket.rooms).filter((r) => r != Socket.id)
+    .forEach((r) => Socket.leave(r));
 }
