@@ -47,6 +47,7 @@ table.prototype.RemovePlayer = function(player, Socket){
 	console.log('in table remove');
 	console.log(player);
 	this.RemoveFromTable(Socket);
+	this.seats_count--;
 	Socket.broadcast.to(this.id).emit('leaved', {'playerId':player._id});
 	
 }
