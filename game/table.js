@@ -1,7 +1,13 @@
 var uniqid = require("uniqid");
 // add game engien with callback contract
+// TODO add key of steatcount+blind and table id + server name + server port
+
 var gameEngien = require("gameEngien");
 
+var Status = {
+	WATCHER : 1,
+	SITTING : 2
+}
 
 module.exports = table;
 
@@ -21,18 +27,18 @@ table.prototype.getMaxByIn = function(){
 	return this.maxByIn;
 }
 
-table.prototype.AddPlayer = function(player, Socket, callback) { // TODO - do this login of assigned listiner to the pick seat, here the player just can see the game but not play
+table.prototype.AddPlayer = function(player, Socket, callback) { 
 	var table = this;
-	this.players[player._id] = {player, 'socket':Socket};
-	this.AssignListeners(Socket, function(){
-		this.seats_count++;
-		callback({'added':true, 'tableId':table.id});
-	});
+	this.players[player._id] = {player, 'socket':Socket, 'status':Status.WATCHER};
+	callback({'added':true, 'tableId':table.id})
 }
 
 
-table.prototype.PickSeat = function(Player) {
-	
+table.prototype.PickSeat = function(Player, Socket, callback) {
+	this.AssignListeners(Socket, function(){
+		this.seats_count++;
+		callback();
+	});
 }
 
 table.prototype.AssignListeners = function(Socket,callback){
