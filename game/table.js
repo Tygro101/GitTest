@@ -12,7 +12,7 @@ var Status = {
 module.exports = table;
 
 
-function table(){
+function table(){// add distroy callback from lobby
 	this.id = uniqid();
 	this.players = {};
 	this.seats_count = 0;
@@ -29,12 +29,15 @@ table.prototype.getMaxByIn = function(){
 
 table.prototype.AddPlayer = function(player, Socket, callback) { 
 	var table = this;
+	Socket.join(table.id);
 	this.players[player._id] = {player, 'socket':Socket, 'status':Status.WATCHER};
 	callback({'added':true, 'tableId':table.id})
 }
 
 
-table.prototype.PickSeat = function(Player, Socket, callback) {
+table.prototype.PickSeat = function(player, Socket, seatLocation, callback) {
+	var tablePlayer = this.players[player._id]
+	tablePlayer.status = Status.SITTING;
 	this.AssignListeners(Socket, function(){
 		this.seats_count++;
 		callback();
@@ -44,25 +47,29 @@ table.prototype.PickSeat = function(Player, Socket, callback) {
 table.prototype.AssignListeners = function(Socket,callback){
 	Socket.join(this.id);
 	Socket.on('muck', function(msg){
-		Socket.broadcast.to('').emit('muck', {'playerId':msg.id});
+		Socket.broadcast.emit('muck', {'playerId':msg.id});
 	});
 	
 	Socket.on('check', function(msg){
-		Socket.broadcast.to(this.id).emit('check', {'playerId':msg.id});
+		Socket.broadcast.emit('check', {'playerId':msg.id});
 	});
 	
 	Socket.on('raise', function(msg) {
-	    Socket.broadcast.to(this.id).emit('raise', {'playerId':msg.id, 'rase':msg.rase});
+	    Socket.broadcast.emit('raise', {'playerId':msg.id, 'rase':msg.rase});
 	})
 	
 	callback();
 }
 
 table.prototype.RemovePlayer = function(player, Socket){
-	console.log('in table remove');
 	console.log(player);
+	//Socket.leave(this.id);
 	this.RemoveFromTable(Socket);
-	this.seats_count--;
+	if(this.players[player._id]!=null && this.players[player._id].status == Status.SITTING)
+		this.seats_count--;
+	if(this.seats_count==0){
+		// Distroy this table from Redis and from all
+	}
 	Socket.broadcast.to(this.id).emit('leaved', {'playerId':player._id});
 	
 }

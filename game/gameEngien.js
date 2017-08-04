@@ -3,25 +3,42 @@ var deck   = require("./deck")().getDeck();
 
 module.exports = gameEngien;
 
+var Status = { 
+    SITTING : 0,
+    INPLAY: 1,
+    MUCK : 2, 
+    FREE : 3
+}
 
-function gameEngien(tableCallback){
+
+function gameEngien(tableCallback, maxSeat){
 	this.id = uniqid();
 	this.deck = deck;
 	this.callback = tableCallback;
-	this.players = [];
+	this.seats = [];
 	this.playersInPlay = [];
 	this.BigPosition = 0;
 	this.plot = 0;
 	this.currentBet = 0;
+	this.maxSeat = maxSeat;
+	this.PrepareList();
+	this.inGame = 0;
 }
 
 /*
     blinds : BIG, SMALL, NONE
-    status : MUCK, INPLAY
+    status : MUCK, INPLAY, SITTING, FREE
 */
 
-gameEngien.prototype.AddPlayer = function(player) {
-    this.players.push({'player':player,'blind':'none', 'status':'check'});
+gameEngien.prototype.AddPlayer = function(player, position, callback) {
+    if(this.seats[position] != null && this.seats[position].status == Status.FREE){
+        this.seats[position].player = player;
+        this.seats[position].status = Status.SITTING;
+        this.inGame++;
+        if(this.inGame>1){
+            // starttt!!
+        }
+    }
 }
 
 gameEngien.prototype.StartGame = function(){
@@ -29,8 +46,11 @@ gameEngien.prototype.StartGame = function(){
         1. Reset needed vars, start of state 3
         2. manage rounds? reset currentBet every round
         3. Decide who is the smal and big bets, then add all playes that have enough money to be small or big
+            °if SB and BB are equal to -1 then the first seat from 1-maxSeats is bb and the oter is smal blind but this is only if the table head minimum of 
+            °no round one acording to the ruls and then rever turn middle and harta
         4. Take from smal and big bets the money.
         5. Start timets https://nodejs.org/en/docs/guides/timers-in-node/
+        
         
     
     */
@@ -59,6 +79,18 @@ gameEngien.prototype.BigSmallDecision = function(){
     // x % y>0?x % y:5+x % y;
     // y - playersInPlay.count
     // x - current big possition
+}
+
+gameEngien.prototype.RemovePlayer = function(position){
+    this.seats[position].player = 'none';
+    this.seats[position].status = Status.FREE;
+}
+
+
+gameEngien.prototype.PrepareList = function(){
+    for(var i = 0; i < this.maxSeat; i++){
+        this.seats[i] = {'player':'none', 'status' : Status.FREE};
+    }
 }
 
 
