@@ -59,6 +59,7 @@
     });
     socket.on('loged-in', function(msg){
       user = msg.user;
+      document.getElementById('logged').value = "Loged";
       console.log(msg);
     });
     
