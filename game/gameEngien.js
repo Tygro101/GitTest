@@ -10,10 +10,16 @@ var Status = {
     FREE : 3
 }
 
+var Blinds = {
+    BIG : 0,
+    SMALL : 1,
+    NONE : 2
+}
+
 
 function gameEngien(tableCallback, maxSeat, tableId){
 	this.id = tableId;
-	this.deck = deck;
+	//this.deck = deck;
 	this.callback = tableCallback;
 	this.seats = [];
 	this.playersInPlay = [];
@@ -23,7 +29,7 @@ function gameEngien(tableCallback, maxSeat, tableId){
 	this.maxSeat = maxSeat;
 	this.PrepareList();
 	this.inGame = 0;
-	this.deck = new deck().getDeck();
+	this.deck = null;
 }
 
 /*
@@ -35,10 +41,16 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
     if(this.seats[position] != null && this.seats[position].status == Status.FREE){
         this.seats[position].player = player;
         this.seats[position].status = Status.SITTING;
+        this.seats[position].blind = Blinds.NONE;
         this.inGame++;
         callback({'status':'setting', 'msg':'player in seat '+position,'tableId':this.id})
         if(this.inGame>1){
-            // starttt!!
+            console.log('Game Onnnn');
+            this.StartGame();
+        }
+        if(this.inGame == 1){
+            this.BigPosition = position;
+            this.seats[position].blind = Blinds.BIG;
         }
     }else{
         callback({'status':'err', 'err':'seat already taking'})
@@ -46,7 +58,11 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
 }
 
 gameEngien.prototype.StartGame = function(){
+    this.deck = new deck().getDeck();
+    this.PrepareStartList();
+    this.BigSmallDecision();
     /*TODO 
+    
         1. Reset needed vars, start of state 3
         2. manage rounds? reset currentBet every round
         3. Decide who is the smal and big bets, then add all playes that have enough money to be small or big
@@ -78,6 +94,15 @@ gameEngien.prototype.AllIn = function(player, cash){
 
 
 gameEngien.prototype.BigSmallDecision = function(){
+    for(var i = this.BigPosition-1; i%(this.maxSeat-1) != this.BigPosition; i=mod(--i, this.maxSeat)){
+        if(this.seats[i].blind == Blinds.BIG)
+            throw Error({msg:"there are two big in the table"}) 
+        if(this.seats[i].player != "none"){
+            this.seats[i].blind = Blinds.SMALL;
+            return;
+        }
+    }
+    throw Error({msg:"there is only one player in the table"}); 
     //this.players[this.BigPosition].state = 'BIG';
     //this.players[this]
     // x % y>0?x % y:5+x % y;
@@ -97,5 +122,16 @@ gameEngien.prototype.PrepareList = function(){
     }
 }
 
+gameEngien.prototype.PrepareStartList = function(){
+    for(var i = 0; i < this.maxSeat; i++){
+        if(this.seats[i].player){
+            this.seats[i].status = Status.INPLAY;
+        }
+    }
+}
 
+
+function mod(a, n) {
+    return a - (n * Math.floor(a/n));
+}
 
