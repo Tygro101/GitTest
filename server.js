@@ -45,8 +45,12 @@ require("./routes/api")(api);
 app.use("/api",api); 
 
 // Test 
+//app.get('/', function(req, res){
+//	res.sendFile(__dirname + '/game/index.html');
+//})
+
 app.get('/', function(req, res){
-	res.sendFile(__dirname + '/game/index.html');
+	res.sendFile(__dirname + '/game/newIndex.html');
 })
 
 app.get('/users', function(req, res){

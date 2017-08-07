@@ -1,5 +1,5 @@
 var uniqid = require("uniqid");
-var deck   = require("./deck")().getDeck();
+var deck   = require("./deck");
 
 module.exports = gameEngien;
 
@@ -11,8 +11,8 @@ var Status = {
 }
 
 
-function gameEngien(tableCallback, maxSeat){
-	this.id = uniqid();
+function gameEngien(tableCallback, maxSeat, tableId){
+	this.id = tableId;
 	this.deck = deck;
 	this.callback = tableCallback;
 	this.seats = [];
@@ -23,6 +23,7 @@ function gameEngien(tableCallback, maxSeat){
 	this.maxSeat = maxSeat;
 	this.PrepareList();
 	this.inGame = 0;
+	this.deck = new deck().getDeck();
 }
 
 /*
@@ -35,9 +36,12 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
         this.seats[position].player = player;
         this.seats[position].status = Status.SITTING;
         this.inGame++;
+        callback({'status':'setting', 'msg':'player in seat '+position,'tableId':this.id})
         if(this.inGame>1){
             // starttt!!
         }
+    }else{
+        callback({'status':'err', 'err':'seat already taking'})
     }
 }
 

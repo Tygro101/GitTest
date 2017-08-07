@@ -6,6 +6,11 @@ module.exports = function(io, game) {
     		console.log("a user as disconnected, Socket : " + socket.id); 
     	});
 
+
+        /*
+        Singup data: 
+            
+        */
     	socket.on('signup', function(msg) {
     		game.Signup(socket, msg, function(err, data){
                 console.log('on socket callback, data : '+data + ' ,err : '+err);
@@ -18,9 +23,8 @@ module.exports = function(io, game) {
     	})
 
         socket.on('login', function(msg) {
-            game.Login(socket, msg, function(err, data){
+            game.Login(socket, msg._id, function(err, data){
                 if(err){
-                    console.log(err);
                     socket.emit('on-error', err);
                 }
                 else{
@@ -30,11 +34,29 @@ module.exports = function(io, game) {
             });
         });
 
-        socket.on('join-table', function(msg) {
+
+        /* join table expected values : 
+         user
+            _id
+            ..
+        tableId
+         */
+        socket.on('join-table', function(msg) { 
             game.JoinTable(socket, msg, function(msg){
                 socket.emit('joined', msg);
             });
         });
+                /* join table expected values : 
+         user
+            _id
+            ..
+        seatLocation
+         */
+        socket.on('pick-a-seat', function(msg) {
+            game.PickASeat(socket, msg, function(msg){
+                socket.emit('sitting', msg);
+            });
+        });        
 
         //socket.on('dec', function(msg) {
         //    game.dicrece(socket, function(err, data){

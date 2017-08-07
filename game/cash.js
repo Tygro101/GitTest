@@ -20,6 +20,7 @@ function cash(){
 	
 	
 	this.GetPlayerByUserId = function(_id){
+		var test = players[_id];
 		return players[_id];
 	}
 
