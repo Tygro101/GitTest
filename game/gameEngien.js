@@ -16,6 +16,20 @@ var Blinds = {
     NONE : 2
 }
 
+var Rounds = {
+    BLINDS:0
+    HOLE:1,
+    BET1:2,
+    PLOT:3,
+    BET2:4,
+    TURN:5,
+    BET3:6,
+    RIVER:7,
+    BET4:8,
+    WIN:9,
+    START:10
+}
+
 
 function gameEngien(tableCallback, maxSeat, tableId){
 	this.id = tableId;
@@ -26,6 +40,7 @@ function gameEngien(tableCallback, maxSeat, tableId){
 	this.BigPosition = 0;
 	this.plot = 0;
 	this.currentBet = 0;
+	this.round = Rounds.BLINDS;
 	this.maxSeat = maxSeat;
 	this.PrepareList();
 	this.inGame = 0;
@@ -58,9 +73,9 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
 }
 
 gameEngien.prototype.StartGame = function(){
-    this.deck = new deck().getDeck();
     this.PrepareStartList();
     this.BigSmallDecision();
+    this.ResetArgs();
     /*TODO 
     
         1. Reset needed vars, start of state 3
@@ -70,6 +85,7 @@ gameEngien.prototype.StartGame = function(){
             °no round one acording to the ruls and then rever turn middle and harta
         4. Take from smal and big bets the money.
         5. Start timets https://nodejs.org/en/docs/guides/timers-in-node/
+        6. must decide how to exclude players how have no money
         
         
     
@@ -92,6 +108,12 @@ gameEngien.prototype.AllIn = function(player, cash){
     
 }
 
+gameEngien.prototype.ResetArgs = function(){
+    this.deck = new deck().getDeck();
+    this.round = Rounds.BLINDS;
+    this.plot = 0;
+    this.currentBet = 0; 
+}
 
 gameEngien.prototype.BigSmallDecision = function(){
     for(var i = this.BigPosition-1; i%(this.maxSeat-1) != this.BigPosition; i=mod(--i, this.maxSeat)){
