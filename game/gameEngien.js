@@ -17,7 +17,7 @@ var Blinds = {
 }
 
 var Rounds = {
-    BLINDS:0
+    BLINDS:0,
     HOLE:1,
     BET1:2,
     PLOT:3,
@@ -37,7 +37,8 @@ function gameEngien(tableCallback, maxSeat, tableId){
 	this.callback = tableCallback;
 	this.seats = [];
 	this.playersInPlay = [];
-	this.BigPosition = 0;
+	this.bigPosition = 0;
+	this.smallPositon = 0;
 	this.plot = 0;
 	this.currentBet = 0;
 	this.round = Rounds.BLINDS;
@@ -60,11 +61,10 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
         this.inGame++;
         callback({'status':'setting', 'msg':'player in seat '+position,'tableId':this.id})
         if(this.inGame>1){
-            console.log('Game Onnnn');
             this.StartGame();
         }
         if(this.inGame == 1){
-            this.BigPosition = position;
+            this.bigPosition = position;
             this.seats[position].blind = Blinds.BIG;
         }
     }else{
@@ -73,9 +73,10 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
 }
 
 gameEngien.prototype.StartGame = function(){
-    this.PrepareStartList();
     this.BigSmallDecision();
-    this.ResetArgs();
+    PrepareStartList();
+    ResetArgs();
+    
     /*TODO 
     
         1. Reset needed vars, start of state 3
@@ -86,41 +87,37 @@ gameEngien.prototype.StartGame = function(){
         4. Take from smal and big bets the money.
         5. Start timets https://nodejs.org/en/docs/guides/timers-in-node/
         6. must decide how to exclude players how have no money
+        7. the cash should be by in cash
         
         
     
     */
 }
 
-gameEngien.prototype.Bet = function(player, bet){
+gameEngien.prototype.Bet = function(position, bet){
     
 }
 
-gameEngien.prototype.Check = function(player){
+gameEngien.prototype.Check = function(position){
     
 }
 
-gameEngien.prototype.Muck = function(player){
+gameEngien.prototype.Muck = function(position){
     // set status faled to player then 
 }
 
-gameEngien.prototype.AllIn = function(player, cash){
+gameEngien.prototype.AllIn = function(position, cash){
     
 }
 
-gameEngien.prototype.ResetArgs = function(){
-    this.deck = new deck().getDeck();
-    this.round = Rounds.BLINDS;
-    this.plot = 0;
-    this.currentBet = 0; 
-}
-
 gameEngien.prototype.BigSmallDecision = function(){
-    for(var i = this.BigPosition-1; i%(this.maxSeat-1) != this.BigPosition; i=mod(--i, this.maxSeat)){
+    var table = this;
+    for(var i = this.bigPosition-1; i%(this.maxSeat-1) != this.bigPosition; i=mod(--i, this.maxSeat)){ // bug decides how is the big small position
         if(this.seats[i].blind == Blinds.BIG)
             throw Error({msg:"there are two big in the table"}) 
-        if(this.seats[i].player != "none"){
+        if(this.seats[i].player){
             this.seats[i].blind = Blinds.SMALL;
+            this.smallPositon = i;
             return;
         }
     }
@@ -133,21 +130,39 @@ gameEngien.prototype.BigSmallDecision = function(){
 }
 
 gameEngien.prototype.RemovePlayer = function(position){
-    this.seats[position].player = 'none';
+    this.seats[position].player = null;
     this.seats[position].status = Status.FREE;
 }
 
+function CollectSBBlinds(){
+    this.callback({'method':'CollectingMoney', 'playerId':this.seats[this.bigPosition].player._id, 'cash':CollectMoney(400)})
+    this.callback({'method':'CollectingMoney', 'playerId':this.seats[this.smallPositon].player._id, 'cash':CollectMoney(200)})
+}
 
-gameEngien.prototype.PrepareList = function(){
+
+function ResetArgs(){
+    this.deck = new deck().getDeck();
+    this.round = Rounds.BLINDS;
+    this.plot = 0;
+    this.currentBet = 0; 
+}
+
+
+function PrepareList(){ //TODO see how i can delete it
     for(var i = 0; i < this.maxSeat; i++){
-        this.seats[i] = {'player':'none', 'status' : Status.FREE};
+        this.seats[i] = {'status' : Status.FREE};
     }
 }
 
-gameEngien.prototype.PrepareStartList = function(){
-    for(var i = 0; i < this.maxSeat; i++){
+function PrepareStartList(){
+    for(var i = 0; i < this.maxSeat; i++){ // i should fill up players in play list and then decide how is bb how is sb is 2 easy
         if(this.seats[i].player){
-            this.seats[i].status = Status.INPLAY;
+            if(this.seats[i].player.gameData.cash!==0){
+                this.seats[i].status = Status.INPLAY;
+            }else{
+                this.seats[i] = {'status' : Status.FREE};
+                //notify all player is out
+            }
         }
     }
 }
@@ -157,3 +172,17 @@ function mod(a, n) {
     return a - (n * Math.floor(a/n));
 }
 
+
+function CollectMoney(cash, collected){
+    return cash-collected<0 ? cash : collected;
+}
+
+
+/* player attr
+    _id
+    gameData
+        cash
+        xp 
+        level
+*/
+    

@@ -84,6 +84,21 @@ table.prototype.RemoveFromTable = function (Socket) {
     .forEach((r) => Socket.leave(r));
 }
 
-table.prototype.EngienCllback = function(){
-	
+table.prototype.EngienCllback = function(msg){
+	switch(msg.method){
+		case 'CollectingMoney':
+			CollectMoney(msg)
+			break;
+	}
+}
+
+function CollectMoney(msg){
+	var table = this;
+	var player = this.players[msg.playerId];
+	player.gameData.cash-=msg.cash;
+	player.save(function(err){
+		//if(err) what should i do?
+		io.to(table.id).emit({'position':2, 'money':msg.cash}); // move shared data to all.
+  	});
+  	
 }
