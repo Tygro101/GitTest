@@ -37,8 +37,8 @@ function gameEngien(tableCallback, maxSeat, tableId){
 	this.callback = tableCallback;
 	this.seats = [];
 	this.playersInPlay = [];
-	this.bigPosition = 0;
-	this.smallPositon = 0;
+	this.bigPosition = -1;
+	this.smallPositon = -1;
 	this.plot = 0;
 	this.currentBet = 0;
 	this.round = Rounds.BLINDS;
@@ -46,6 +46,7 @@ function gameEngien(tableCallback, maxSeat, tableId){
 	this.PrepareList();
 	this.inGame = 0;
 	this.deck = null;
+	this.InPlay = false;
 }
 
 /*
@@ -59,13 +60,15 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
         this.seats[position].status = Status.SITTING;
         this.seats[position].blind = Blinds.NONE;
         this.inGame++;
+        //if(this.inGame===1 ){
+        //    this.bigPosition = position;
+        //}else if(this.inGame === 2){
+        //    this.smallPositon =  position;
+        //}
         callback({'status':'setting', 'msg':'player in seat '+position,'tableId':this.id})
-        if(this.inGame>1){
+        if(this.inGame>1 && !this.InPlay){
+            FirstInit();
             this.StartGame();
-        }
-        if(this.inGame == 1){
-            this.bigPosition = position;
-            this.seats[position].blind = Blinds.BIG;
         }
     }else{
         callback({'status':'err', 'err':'seat already taking'})
@@ -73,7 +76,7 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
 }
 
 gameEngien.prototype.StartGame = function(){
-    this.BigSmallDecision();
+    BigSmallDecision();
     PrepareStartList();
     ResetArgs();
     
@@ -110,18 +113,21 @@ gameEngien.prototype.AllIn = function(position, cash){
     
 }
 
-gameEngien.prototype.BigSmallDecision = function(){
-    var table = this;
-    for(var i = this.bigPosition-1; i%(this.maxSeat-1) != this.bigPosition; i=mod(--i, this.maxSeat)){ // bug decides how is the big small position
-        if(this.seats[i].blind == Blinds.BIG)
-            throw Error({msg:"there are two big in the table"}) 
-        if(this.seats[i].player){
-            this.seats[i].blind = Blinds.SMALL;
-            this.smallPositon = i;
-            return;
-        }
+function BigSmallDecision(){
+    for(var seat in this.playersInPlay){
+        
     }
-    throw Error({msg:"there is only one player in the table"}); 
+    //var table = this;
+    //for(var i = this.bigPosition-1; i%(this.maxSeat-1) != this.bigPosition; i=mod(--i, this.maxSeat)){ // bug decides how is the big small position
+    //    if(this.seats[i].blind == Blinds.BIG)
+    //        throw Error({msg:"there are two big in the table"}) 
+    //    if(this.seats[i].player){
+    //        this.seats[i].blind = Blinds.SMALL;
+    //        this.smallPositon = i;
+    //        return;
+    //    }
+    //}
+    //throw Error({msg:"there is only one player in the table"}); 
     //this.players[this.BigPosition].state = 'BIG';
     //this.players[this]
     // x % y>0?x % y:5+x % y;
@@ -130,8 +136,7 @@ gameEngien.prototype.BigSmallDecision = function(){
 }
 
 gameEngien.prototype.RemovePlayer = function(position){
-    this.seats[position].player = null;
-    this.seats[position].status = Status.FREE;
+    this.seats[position] = null;
 }
 
 function CollectSBBlinds(){
@@ -148,9 +153,9 @@ function ResetArgs(){
 }
 
 
-function PrepareList(){ //TODO see how i can delete it
+function ResetList(){ //TODO see how i can delete it
     for(var i = 0; i < this.maxSeat; i++){
-        this.seats[i] = {'status' : Status.FREE};
+        this.seats[i] = null;
     }
 }
 
@@ -159,16 +164,25 @@ function PrepareStartList(){
         if(this.seats[i].player){
             if(this.seats[i].player.gameData.cash!==0){
                 this.seats[i].status = Status.INPLAY;
+                this.playersInPlay = {'position':i, playerId:this.seats[i].player._id, }
             }else{
-                this.seats[i] = {'status' : Status.FREE};
-                //notify all player is out
+                this.seats[i] = null;
+                //notify all is out
             }
         }
     }
 }
 
+function FirstInit(){
+    for(var i = 0; i < this.seats.size();i++){
+        if(this.seats[i].player){
+            
+        }
+    }
+}
 
-function mod(a, n) {
+
+function Mod(a, n) {
     return a - (n * Math.floor(a/n));
 }
 
