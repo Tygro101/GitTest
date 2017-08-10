@@ -79,6 +79,11 @@ gameEngien.prototype.StartGame = function(){
     BigSmallDecision();
     PrepareStartList();
     ResetArgs();
+    if(this.InPlay){
+        
+    }else{
+        FirstInit();
+    }
     
     /*TODO 
     
@@ -164,7 +169,7 @@ function PrepareStartList(){
         if(this.seats[i].player){
             if(this.seats[i].player.gameData.cash!==0){
                 this.seats[i].status = Status.INPLAY;
-                this.playersInPlay = {'position':i, playerId:this.seats[i].player._id, }
+                this.playersInPlay = {'position':i, playerId:this.seats[i].player._id }
             }else{
                 this.seats[i] = null;
                 //notify all is out
