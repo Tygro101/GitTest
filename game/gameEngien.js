@@ -13,7 +13,8 @@ var Status = {
 var Blinds = {
     BIG : 0,
     SMALL : 1,
-    NONE : 2
+    BUTTON:2,
+    NONE : 3
 }
 
 var Rounds = {
@@ -67,7 +68,6 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
         //}
         callback({'status':'setting', 'msg':'player in seat '+position,'tableId':this.id})
         if(this.inGame>1 && !this.InPlay){
-            FirstInit();
             this.StartGame();
         }
     }else{
@@ -76,11 +76,11 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
 }
 
 gameEngien.prototype.StartGame = function(){
-    BigSmallDecision();
+    //BigSmallDecision();
     PrepareStartList();
     ResetArgs();
     if(this.InPlay){
-        
+        BigSmallDecision();
     }else{
         FirstInit();
     }
@@ -119,9 +119,49 @@ gameEngien.prototype.AllIn = function(position, cash){
 }
 
 function BigSmallDecision(){
-    for(var seat in this.playersInPlay){
-        
+    var cPlaying = this.playersInPlay.size();
+    var bigPosition = -1;
+    for(var i = 0; i<this.playersInPlay.size(); i++){
+        if(this.playersInPlay[i].blind === Blinds.BIG){
+            bigPosition = i;
+        }
+        this.playersInPlay[i].blind = Blinds.NONE;
     }
+    
+    // TODO THERE ARE PLANTY OF TYPES OF DECISION (if bb left or sb left of any other stat, it should be switch case)
+
+    // new BIG set
+    this.playersInPlay[Mod(bigPosition + 1,cPlaying)].blind = Blinds.BIG;
+    var bPosition = this.playersInPlay[Mod(bigPosition + 1, cPlaying)].position;
+    
+    // new SMALL set
+    this.playersInPlay[Mod(bigPosition, cPlaying)].blind = Blinds.SMALL;
+    var sPosition = this.playersInPlay[Mod(bigPosition, cPlaying)].position;
+    
+    // new BUTTON
+    this.playersInPlay[Mod(bigPosition - 1, cPlaying)].blind = Blinds.BUTTON;
+    var buPosition = this.playersInPlay[Mod(bigPosition - 1, cPlaying)].position; 
+    
+
+    for(var i = 0 ; i < this.seats.size(); i++){
+        if(this.seats[i]){
+            switch(i){
+                case bPosition:
+                    this.seats[i].blind = Blinds.BIG;
+                    break;
+                case sPosition:
+                    this.seats[i].blind = Blinds.SMALL;
+                    break;
+                case buPosition:
+                    this.seats[i].blind = Blinds.BUTTON;
+                    break;
+                default:
+                     this.seats[i].blind = Blinds.NONE;
+                    break;
+            }
+        }
+    }
+    
     //var table = this;
     //for(var i = this.bigPosition-1; i%(this.maxSeat-1) != this.bigPosition; i=mod(--i, this.maxSeat)){ // bug decides how is the big small position
     //    if(this.seats[i].blind == Blinds.BIG)
@@ -169,7 +209,7 @@ function PrepareStartList(){
         if(this.seats[i].player){
             if(this.seats[i].player.gameData.cash!==0){
                 this.seats[i].status = Status.INPLAY;
-                this.playersInPlay = {'position':i, playerId:this.seats[i].player._id }
+                this.playersInPlay = {'position':i, playerId:this.seats[i].player._id, 'blinds':this.seats[i].blind }
             }else{
                 this.seats[i] = null;
                 //notify all is out
@@ -179,16 +219,16 @@ function PrepareStartList(){
 }
 
 function FirstInit(){
-    for(var i = 0; i < this.seats.size();i++){
-        if(this.seats[i].player){
-            
-        }
-    }
+    this.playersInPlay[0].blind = Blinds.SMALL;
+    //this.playersInPlay[0].blind = Blinds.BUTTON;// ignore in case of 2 players client will show
+    this.seats[this.playersInPlay[0].position].blinds.SMALL;
+    this.playersInPlay[1].blind = Blinds.BIG;
+    this.seats[this.playersInPlay[1].position].blinds.SMALL;
 }
 
 
-function Mod(a, n) {
-    return a - (n * Math.floor(a/n));
+function Mod(position, base) {
+    return position - (base * Math.floor(position/base));
 }
 
 
