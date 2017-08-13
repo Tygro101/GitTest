@@ -62,7 +62,7 @@ app.get('/users', function(req, res){
 
 io.adapter(socketioRedis({host: redisConfig.redis_host, port: redisConfig.redis_port}));
 
-require("./services/Socket")(io, new game(new dataLayer(), new cash()));
+require("./services/Socket")(io, new game(new dataLayer(), new cash(), io));
 
 
 

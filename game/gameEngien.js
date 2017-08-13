@@ -32,14 +32,16 @@ var Rounds = {
 }
 
 
-function gameEngien(tableCallback, maxSeat, tableId){
+function gameEngien(tableCallback, maxSeat, tableId, io){
 	this.id = tableId;
+	this.io = io;
 	//this.deck = deck;
 	this.callback = tableCallback;
 	this.seats = [];
 	this.playersInPlay = [];
 	this.bigPosition = -1;
 	this.smallPositon = -1;
+	this.buttonPosition = -1;
 	this.plot = 0;
 	this.currentBet = 0;
 	this.round = Rounds.BLINDS;
@@ -87,7 +89,7 @@ gameEngien.prototype.StartGame = function(){
         this.FirstInit();
     }
     this.FirstTwoCards();
-    
+    this.CollectSBBlinds();
     /*TODO 
     
         1. Reset needed vars, start of state 3
@@ -148,6 +150,20 @@ gameEngien.prototype.PrepareStartList = function(){
     }
 }
 
+gameEngien.prototype.FirstInit = function(){
+    this.playersInPlay[0].blind = Blinds.SMALL;
+    var pp = this.playersInPlay[0];
+    //this.playersInPlay[0].blind = Blinds.BUTTON;// ignore in case of 2 players client will show
+    this.seats[this.playersInPlay[0].position].blind = Blinds.SMALL;
+    
+    this.playersInPlay[1].blind = Blinds.BIG;
+    this.seats[this.playersInPlay[1].position].blind = Blinds.BIG;
+    this.bigPosition = this.playersInPlay[1].position;
+    this.smallPositon = this.playersInPlay[0].position;
+    this.buttonPosition = this.playersInPlay[0].position;
+}
+
+
 gameEngien.prototype.BigSmallDecision = function(){
     var cPlaying = this.playersInPlay.length;
     var bigPosition = -1;
@@ -163,14 +179,18 @@ gameEngien.prototype.BigSmallDecision = function(){
     // new BIG set
     this.playersInPlay[Mod(bigPosition + 1,cPlaying)].blind = Blinds.BIG;
     var bPosition = this.playersInPlay[Mod(bigPosition + 1, cPlaying)].position;
+    this.bigPosition = bPosition; // todo remove it to bposition init
     
     // new SMALL set
     this.playersInPlay[Mod(bigPosition, cPlaying)].blind = Blinds.SMALL;
     var sPosition = this.playersInPlay[Mod(bigPosition, cPlaying)].position;
+    this.smallPositon = sPosition;// todo remove it to bposition init
+    
     
     // new BUTTON
     this.playersInPlay[Mod(bigPosition - 1, cPlaying)].blind = Blinds.BUTTON;
     var buPosition = this.playersInPlay[Mod(bigPosition - 1, cPlaying)].position; 
+    this.buttonPosition = buPosition;// todo remove it to bposition init
     
 
     for(var i = 0 ; i < this.seats.length; i++){
@@ -224,8 +244,19 @@ gameEngien.prototype.FirstTwoCards = function(){
 
 
 gameEngien.prototype.CollectSBBlinds = function(){
-    this.callback({'method':'CollectingMoney', 'playerId':this.seats[this.bigPosition].player._id, 'cash':CollectMoney(400)})
-    this.callback({'method':'CollectingMoney', 'playerId':this.seats[this.smallPositon].player._id, 'cash':CollectMoney(200)})
+    var bbPlayer = this.seats[this.bigPosition].player;
+    bbPlayer.gameData.cash -= 400; //TODO change it to BB
+    //bbPlayer.save(function(err){
+    //    
+    //});
+    this.io.to(this.id).emit('gamecall',{method:'BB', playerId:bbPlayer._id});
+    
+    var sbPlayer = this.seats[this.smallPositon].player;
+    sbPlayer.gameData.cash -= 200; //TODO change it to BB
+    //sbPlayer.save(function(err){
+    //    
+    //});   
+    this.io.to(this.id).emit('gamecall',{method:'SB', playerId:sbPlayer._id});
 }
 
 
@@ -239,15 +270,6 @@ gameEngien.prototype.ResetArgs = function(){
 
 
 
-gameEngien.prototype.FirstInit = function(){
-    this.playersInPlay[0].blind = Blinds.SMALL;
-    var pp = this.playersInPlay[0];
-    //this.playersInPlay[0].blind = Blinds.BUTTON;// ignore in case of 2 players client will show
-    this.seats[this.playersInPlay[0].position].blind = Blinds.SMALL;
-    
-    this.playersInPlay[1].blind = Blinds.BIG;
-    this.seats[this.playersInPlay[1].position].blind = Blinds.BIG;
-}
 
 
 function Mod(position, base) {

@@ -4,10 +4,11 @@ var gameLobby = require("./gameLobby");
 module.exports = Game;
 
 
-function Game(dl, cash){
+function Game(dl, cash, io){
 	this.dl = dl;
 	this.cash = cash;
-	this.gameLobby = new gameLobby(); 
+	this.gameLobby = new gameLobby(io); 
+	//this.io = io;
 }
 
 Game.prototype.Signup = function(Socket, data, callback){

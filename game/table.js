@@ -12,14 +12,14 @@ var Status = {
 module.exports = table;
 
 
-function table(maxSeats){// add distroy callback from lobby
+function table(maxSeats, io){// add distroy callback from lobby
 	this.id = uniqid();
 	this.players = {};
 	this.seats_count = 0;
 	this.blind = 0;
 	this.maxByIn = 0;
 	this.maxSeats = maxSeats;
-	this.game = new gameEngien(this.EngienCllback, maxSeats, this.id);
+	this.game = new gameEngien(this.EngienCllback, maxSeats, this.id, io);
 	return this.id;
 }
 
