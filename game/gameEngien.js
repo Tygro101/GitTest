@@ -44,10 +44,11 @@ function gameEngien(tableCallback, maxSeat, tableId){
 	this.currentBet = 0;
 	this.round = Rounds.BLINDS;
 	this.maxSeat = maxSeat;
-	this.PrepareList();
 	this.inGame = 0;
 	this.deck = null;
 	this.InPlay = false;
+	
+	this.preaperList();
 }
 
 /*
@@ -55,11 +56,12 @@ function gameEngien(tableCallback, maxSeat, tableId){
     status : MUCK, INPLAY, SITTING, FREE
 */
 
-gameEngien.prototype.AddPlayer = function(player, position, callback) {
-    if(this.seats[position] != null && this.seats[position].status == Status.FREE){
+gameEngien.prototype.AddPlayer = function(player, Socket, position, callback) {
+    if(this.seats[position].status == Status.FREE){// && this.seats[position].status == Status.FREE){
         this.seats[position].player = player;
         this.seats[position].status = Status.SITTING;
         this.seats[position].blind = Blinds.NONE;
+        this.seats[position].Socket = Socket;
         this.inGame++;
         //if(this.inGame===1 ){
         //    this.bigPosition = position;
@@ -77,13 +79,14 @@ gameEngien.prototype.AddPlayer = function(player, position, callback) {
 
 gameEngien.prototype.StartGame = function(){
     //BigSmallDecision();
-    PrepareStartList();
-    ResetArgs();
+    this.PrepareStartList();
+    this.ResetArgs();
     if(this.InPlay){
-        BigSmallDecision();
+        this.BigSmallDecision();
     }else{
-        FirstInit();
+        this.FirstInit();
     }
+    this.FirstTwoCards();
     
     /*TODO 
     
@@ -118,10 +121,37 @@ gameEngien.prototype.AllIn = function(position, cash){
     
 }
 
-function BigSmallDecision(){
-    var cPlaying = this.playersInPlay.size();
+gameEngien.prototype.RemovePlayer = function(position){
+    this.seats[position] = {status:Status.FREE};
+}
+
+
+gameEngien.prototype.preaperList = function(){
+    for(var i = 0; i < this.maxSeat; i++){
+        this.seats[i] = {status:Status.FREE};
+    }
+}
+
+
+gameEngien.prototype.PrepareStartList = function(){
+    var PIP = 0;
+    for(var i = 0; i < this.maxSeat; i++){ // i should fill up players in play list and then decide how is bb how is sb is 2 easy
+        if(this.seats[i].player){
+            if(this.seats[i].player.gameData.cash!==0){
+                this.seats[i].status = Status.INPLAY;
+                this.playersInPlay[PIP++] = {'position':i, playerId:this.seats[i].player._id, 'blinds':this.seats[i].blind }
+            }else{
+                this.seats[i] = {status:Status.FREE};
+                //notify all is out
+            }
+        }
+    }
+}
+
+gameEngien.prototype.BigSmallDecision = function(){
+    var cPlaying = this.playersInPlay.length;
     var bigPosition = -1;
-    for(var i = 0; i<this.playersInPlay.size(); i++){
+    for(var i = 0; i<this.playersInPlay.length; i++){
         if(this.playersInPlay[i].blind === Blinds.BIG){
             bigPosition = i;
         }
@@ -143,7 +173,7 @@ function BigSmallDecision(){
     var buPosition = this.playersInPlay[Mod(bigPosition - 1, cPlaying)].position; 
     
 
-    for(var i = 0 ; i < this.seats.size(); i++){
+    for(var i = 0 ; i < this.seats.length; i++){
         if(this.seats[i]){
             switch(i){
                 case bPosition:
@@ -161,6 +191,10 @@ function BigSmallDecision(){
             }
         }
     }
+    
+    //Collect blinds
+    
+    
     
     //var table = this;
     //for(var i = this.bigPosition-1; i%(this.maxSeat-1) != this.bigPosition; i=mod(--i, this.maxSeat)){ // bug decides how is the big small position
@@ -180,17 +214,22 @@ function BigSmallDecision(){
     // x - current big possition
 }
 
-gameEngien.prototype.RemovePlayer = function(position){
-    this.seats[position] = null;
+gameEngien.prototype.FirstTwoCards = function(){
+    for(var i = 0; i< this.playersInPlay.length; i++){
+        var hand = this.deck.draw(2);
+        this.seats[this.playersInPlay[i].position].Socket.emit('hand',hand);
+        this.playersInPlay[i].hand = hand;
+    }
 }
 
-function CollectSBBlinds(){
+
+gameEngien.prototype.CollectSBBlinds = function(){
     this.callback({'method':'CollectingMoney', 'playerId':this.seats[this.bigPosition].player._id, 'cash':CollectMoney(400)})
     this.callback({'method':'CollectingMoney', 'playerId':this.seats[this.smallPositon].player._id, 'cash':CollectMoney(200)})
 }
 
 
-function ResetArgs(){
+gameEngien.prototype.ResetArgs = function(){
     this.deck = new deck().getDeck();
     this.round = Rounds.BLINDS;
     this.plot = 0;
@@ -198,32 +237,16 @@ function ResetArgs(){
 }
 
 
-function ResetList(){ //TODO see how i can delete it
-    for(var i = 0; i < this.maxSeat; i++){
-        this.seats[i] = null;
-    }
-}
 
-function PrepareStartList(){
-    for(var i = 0; i < this.maxSeat; i++){ // i should fill up players in play list and then decide how is bb how is sb is 2 easy
-        if(this.seats[i].player){
-            if(this.seats[i].player.gameData.cash!==0){
-                this.seats[i].status = Status.INPLAY;
-                this.playersInPlay = {'position':i, playerId:this.seats[i].player._id, 'blinds':this.seats[i].blind }
-            }else{
-                this.seats[i] = null;
-                //notify all is out
-            }
-        }
-    }
-}
 
-function FirstInit(){
+gameEngien.prototype.FirstInit = function(){
     this.playersInPlay[0].blind = Blinds.SMALL;
+    var pp = this.playersInPlay[0];
     //this.playersInPlay[0].blind = Blinds.BUTTON;// ignore in case of 2 players client will show
-    this.seats[this.playersInPlay[0].position].blinds.SMALL;
+    this.seats[this.playersInPlay[0].position].blind = Blinds.SMALL;
+    
     this.playersInPlay[1].blind = Blinds.BIG;
-    this.seats[this.playersInPlay[1].position].blinds.SMALL;
+    this.seats[this.playersInPlay[1].position].blind = Blinds.BIG;
 }
 
 

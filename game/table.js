@@ -34,7 +34,7 @@ table.prototype.AddPlayer = function(player, Socket, callback) {
 			callback({'status':'err', 'msg':'user already in table','tableId':this.id})
 	}else{
 		Socket.join(this.id);
-		this.players[player._id] = {player, 'socket':Socket, 'status':Status.WATCHER};
+		this.players[player._id] = {player, 'status':Status.WATCHER}; //'socket':Socket, 'status':Status.WATCHER};
 		callback({'status':'watcher', 'msg':'user added to table','tableId':this.id})
 	}
 }
@@ -44,13 +44,15 @@ table.prototype.PickSeat = function(player, Socket, seatLocation, callback) {
 	var tablePlayer = this.players[player._id]
 	tablePlayer.status = Status.SITTING;
 	var table = this;
-	this.game.AddPlayer(tablePlayer,seatLocation,function(msg){
+	this.game.AddPlayer(tablePlayer.player, Socket, seatLocation,function(msg){
 		table.AssignListeners(Socket)
 		table.seats_count++;
 		callback(msg);
 	})
 
 }
+
+// maybe move it to game engien
 
 table.prototype.AssignListeners = function(Socket){
 	Socket.on('muck', function(msg){
