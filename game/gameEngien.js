@@ -18,23 +18,23 @@ var Blinds = {
 }
 
 var Rounds = {
-    BLINDS:0,
-    HOLE:1,
-    BET1:2,
-    PLOT:3,
-    BET2:4,
-    TURN:5,
-    BET3:6,
-    RIVER:7,
-    BET4:8,
-    WIN:9,
-    START:10
+    START:0,
+    BLINDS:1,
+    HOLE:2,
+    BET1:3,
+    PLOT:4,
+    BET2:5,
+    TURN:6,
+    BET3:7,
+    RIVER:8,
+    BET4:9,
+    WIN:10
 }
 
 
 function gameEngien(tableCallback, maxSeat, tableId, io){
 	this.id = tableId;
-	this.io = io;
+	this.io = io; // TODO Critical move this to lobby there is no need to duplicate this massive value every table
 	//this.deck = deck;
 	this.callback = tableCallback;
 	this.seats = [];
@@ -49,6 +49,7 @@ function gameEngien(tableCallback, maxSeat, tableId, io){
 	this.inGame = 0;
 	this.deck = null;
 	this.InPlay = false;
+	this.gameRound = Rounds.START;
 	
 	this.preaperList();
 }
@@ -65,31 +66,24 @@ gameEngien.prototype.AddPlayer = function(player, Socket, position, callback) {
         this.seats[position].blind = Blinds.NONE;
         this.seats[position].Socket = Socket;
         this.inGame++;
-        //if(this.inGame===1 ){
-        //    this.bigPosition = position;
-        //}else if(this.inGame === 2){
-        //    this.smallPositon =  position;
-        //}
         callback({'status':'setting', 'msg':'player in seat '+position,'tableId':this.id})
         if(this.inGame>1 && !this.InPlay){
-            this.StartGame();
+            this.DeployRound(this);
         }
     }else{
         callback({'status':'err', 'err':'seat already taking'})
     }
 }
 
+
+
 gameEngien.prototype.StartGame = function(){
-    //BigSmallDecision();
     this.PrepareStartList();
     this.ResetArgs();
-    if(this.InPlay){
-        this.BigSmallDecision();
-    }else{
-        this.FirstInit();
-    }
-    this.FirstTwoCards();
-    this.CollectSBBlinds();
+    this.gameRound = Rounds.BLINDS;
+
+    
+    
     /*TODO 
     
         1. Reset needed vars, start of state 3
@@ -141,7 +135,7 @@ gameEngien.prototype.PrepareStartList = function(){
         if(this.seats[i].player){
             if(this.seats[i].player.gameData.cash!==0){
                 this.seats[i].status = Status.INPLAY;
-                this.playersInPlay[PIP++] = {'position':i, playerId:this.seats[i].player._id, 'blinds':this.seats[i].blind }
+                this.playersInPlay[PIP++] = {'position':i, playerId:this.seats[i].player._id, 'blind':this.seats[i].blind }
             }else{
                 this.seats[i] = {status:Status.FREE};
                 //notify all is out
@@ -150,17 +144,69 @@ gameEngien.prototype.PrepareStartList = function(){
     }
 }
 
+gameEngien.prototype.DeployRound = function(context){
+    switch(context.gameRound){
+        case Rounds.START:  
+            
+            context.StartGame();
+            context.DeployRound(context);
+            break;
+            
+        case Rounds.BLINDS: 
+            
+            context.BigSmallMethod();
+            context.DeployRound(context);
+            break;
+            
+        case Rounds.HOLE:   
+            
+            context.FirstTwoCards();
+            setTimeout(context.DeployRound, 1000, context);
+            
+            break;
+        case Rounds.BET1:   
+            break;
+        case Rounds.PLOT:   
+            break;
+        case Rounds.BET2:   
+            break;
+        case Rounds.TURN:   
+            break;
+        case Rounds.BET3:   
+            break;
+        case Rounds.RIVER:  
+            break;
+        case Rounds.BET4:   
+            break;
+        case Rounds.WIN:    
+            break;
+    }
+}
+
+
+
+//----- Game States ------//
+
+gameEngien.prototype.BigSmallMethod = function(){
+    if(this.InPlay){
+            this.BigSmallDecision();
+    }else{
+            this.FirstInit();
+    }
+    this.CollectSBBlinds();
+}
+
 gameEngien.prototype.FirstInit = function(){
     this.playersInPlay[0].blind = Blinds.SMALL;
     var pp = this.playersInPlay[0];
     //this.playersInPlay[0].blind = Blinds.BUTTON;// ignore in case of 2 players client will show
     this.seats[this.playersInPlay[0].position].blind = Blinds.SMALL;
-    
     this.playersInPlay[1].blind = Blinds.BIG;
     this.seats[this.playersInPlay[1].position].blind = Blinds.BIG;
     this.bigPosition = this.playersInPlay[1].position;
     this.smallPositon = this.playersInPlay[0].position;
     this.buttonPosition = this.playersInPlay[0].position;
+    this.InPlay = true;
 }
 
 
@@ -168,7 +214,7 @@ gameEngien.prototype.BigSmallDecision = function(){
     var cPlaying = this.playersInPlay.length;
     var bigPosition = -1;
     for(var i = 0; i<this.playersInPlay.length; i++){
-        if(this.playersInPlay[i].blind === Blinds.BIG){
+        if(this.playersInPlay[i].blind == Blinds.BIG){
             bigPosition = i;
         }
         this.playersInPlay[i].blind = Blinds.NONE;
@@ -211,52 +257,39 @@ gameEngien.prototype.BigSmallDecision = function(){
             }
         }
     }
-    
-    //Collect blinds
-    
-    
-    
-    //var table = this;
-    //for(var i = this.bigPosition-1; i%(this.maxSeat-1) != this.bigPosition; i=mod(--i, this.maxSeat)){ // bug decides how is the big small position
-    //    if(this.seats[i].blind == Blinds.BIG)
-    //        throw Error({msg:"there are two big in the table"}) 
-    //    if(this.seats[i].player){
-    //        this.seats[i].blind = Blinds.SMALL;
-    //        this.smallPositon = i;
-    //        return;
-    //    }
-    //}
-    //throw Error({msg:"there is only one player in the table"}); 
-    //this.players[this.BigPosition].state = 'BIG';
-    //this.players[this]
-    // x % y>0?x % y:5+x % y;
-    // y - playersInPlay.count
-    // x - current big possition
 }
 
 gameEngien.prototype.FirstTwoCards = function(){
     for(var i = 0; i< this.playersInPlay.length; i++){
         var hand = this.deck.draw(2);
-        this.seats[this.playersInPlay[i].position].Socket.emit('hand',hand);
+        this.seats[this.playersInPlay[i].position].Socket.emit('hand',{'hand':hand});
         this.playersInPlay[i].hand = hand;
     }
+    this.gameRound = Rounds.START;//Rounds.BET1;
 }
 
 
 gameEngien.prototype.CollectSBBlinds = function(){
     var bbPlayer = this.seats[this.bigPosition].player;
-    bbPlayer.gameData.cash -= 400; //TODO change it to BB
+    if(bbPlayer == undefined)
+        console.log("");
+    //bbPlayer.gameData.cash -= 400; //TODO change it to BB
     //bbPlayer.save(function(err){
     //    
     //});
     this.io.to(this.id).emit('gamecall',{method:'BB', playerId:bbPlayer._id});
     
     var sbPlayer = this.seats[this.smallPositon].player;
-    sbPlayer.gameData.cash -= 200; //TODO change it to BB
+    //sbPlayer.gameData.cash -= 200; //TODO change it to BB
     //sbPlayer.save(function(err){
     //    
     //});   
     this.io.to(this.id).emit('gamecall',{method:'SB', playerId:sbPlayer._id});
+    
+    this.gameRound = Rounds.HOLE;
+    
+    //console.log(sbPlayer.gameData.cash);
+    //console.log(bbPlayer.gameData.cash);
 }
 
 
@@ -266,7 +299,6 @@ gameEngien.prototype.ResetArgs = function(){
     this.plot = 0;
     this.currentBet = 0; 
 }
-
 
 
 
